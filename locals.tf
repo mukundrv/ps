@@ -11,7 +11,7 @@ locals {
       env_code               = var.env_code
       module_name            = "gcp-parallelstore"
       module_type            = "terraform"
-#      cte_version_id         = "108744"
+      #      cte_version_id         = "108744"
     },
     var.tags
   )
