@@ -1,27 +1,31 @@
 terraform {
+  required_version = ">=1.6"
+
   required_providers {
     google = {
       source  = "hashicorp/google"
-      version = ">=6.15.0"
+      version = "~> 6.15.0"
     }
     random = {
       source  = "hashicorp/random"
-      version = ">=3.3.2"
+      version = "~> 3.3.2"
     }
   }
 }
 
+
 provider "google" {
   project = var.project_id
-  region  = var.location
+  region  = var.region
 }
 
 
-module "test_parallelstore_module" {
-  source                 = "../."
-  create_instance        = var.create_instance
+module "parallelstore_test" {
+  source                 = "../.."
+  enable_instance        = var.enable_instance
+  ps_description         = var.ps_description
   capacity_gib           = var.capacity_gib
-  location               = var.location
+  region                 = var.region
   file_stripe_level      = var.file_stripe_level
   directory_stripe_level = var.directory_stripe_level
   tags                   = var.tags

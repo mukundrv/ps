@@ -1,4 +1,4 @@
-variable "location" {
+variable "region" {
   description = "region name"
   type        = string
 }
@@ -17,15 +17,20 @@ variable "network_name" {
 
 ############################# Parallelstore #############################
 
-variable "create_instance" {
+variable "enable_instance" {
   description = "create/destroy parallestore instance"
   type        = bool
+}
+
+variable "ps_description" {
+  description = "Parallelstore instance description"
+  type        = string
 }
 
 variable "capacity_gib" {
   description = "parallestore instance size in storage n"
   type        = string
-  default     = "21000"
+  default     = "27000"
 
   validation {
     condition     = var.capacity_gib >= 21000 && var.capacity_gib <= 301000 && var.capacity_gib % 7000 == 0
