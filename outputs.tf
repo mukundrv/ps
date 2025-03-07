@@ -14,8 +14,8 @@ output "instance_id" {
   value       = google_parallelstore_instance.main[*].id
 }
 
-output "instance_labels" {
+output "effective_labels" {
   description = "Name of the parallestore instance"
-  value       = google_parallelstore_instance.main[*].labels
+  value       = google_parallelstore_instance.main[*].effective_labels
 }
 

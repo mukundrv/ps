@@ -8,7 +8,7 @@ output "instance_id" {
   value       = module.parallelstore_test.instance_id
 }
 
-output "instance_labels" {
+output "tags" {
   description = "Name of the parallestore instance"
   value       = module.parallelstore_test.effective_labels
 }
