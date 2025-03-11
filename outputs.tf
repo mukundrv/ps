@@ -19,3 +19,12 @@ output "effective_labels" {
   value       = google_parallelstore_instance.main[*].effective_labels
 }
 
+output "region" {
+  description = "Region of the parallestore instance"
+  value       = google_parallelstore_instance.main[*].location
+}
+
+output "capacity_gb" {
+  description = "Capacity of the parallestore instance"
+  value       = google_parallelstore_instance.main[*].capacity_gib
+}
