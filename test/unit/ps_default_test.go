@@ -29,8 +29,8 @@ func TestParallelstoreSuite(t *testing.T) {
 	terraform.InitAndApply(t, terraformOptions)
 
 	// 🚀 Step 2: Run Subtests Sequentially
-	t.Run("TestParallelstoreInstanceExists", TestParallelstoreInstanceExists)
-	t.Run("TestTerraformParallelStoreDefault", TestTerraformParallelStoreDefault)
+	t.Run("ParallelstoreInstanceExists", testParallelstoreInstanceExists)
+	t.Run("TerraformParallelStoreDefault", testTerraformParallelStoreDefault)
 
     // Register cleanup to ensure Terraform destroy runs last
     t.Cleanup(func() {
@@ -39,7 +39,7 @@ func TestParallelstoreSuite(t *testing.T) {
 }
 
 // Function to fetch Parallelstore instance from GCP API
-func getParallelstoreInstance() (string, error) {
+func getParallelstoreInstance(expectedName string) (string, error) {
 	ctx := context.Background()
 
 	// Initialize Parallelstore API client
@@ -64,27 +64,29 @@ func getParallelstoreInstance() (string, error) {
 			return "", err
 		}
 
-		// Return the first available instance name (assuming only one instance)
-		if strings.Contains(instance.Name, "ps") {
+		// ✅ Return only if the instance name matches the expected name
+		if strings.Contains(instance.Name, expectedName) {
 			return instance.Name, nil
 		}
 	}
-	return "", fmt.Errorf("No Parallelstore instance containing 'ps' found in project %s, region %s", projectID, location)
+
+	return "", fmt.Errorf("No Parallelstore instance matching '%s' found in project %s, region %s", expectedName, projectID, location)
 }
 
 // Test if the instance exists in GCP
-func TestParallelstoreInstanceExists(t *testing.T) {
-	instanceName, err := getParallelstoreInstance()
+func testParallelstoreInstanceExists(t *testing.T) {
+	expectedInstanceName := terraform.Output(t, terraformOptions, "instance_name")
+	instanceName, err := getParallelstoreInstance(expectedInstanceName)
 	assert.NoError(t, err, "Failed to retrieve Parallelstore instance from GCP")
 	assert.NotEmpty(t, instanceName, "No Parallelstore instance found with 'ps' in its name")
 }
 
 // Test if the actual instance name from GCP match with the terraform output
-func TestTerraformParallelStoreDefault(t *testing.T) {
+func testTerraformParallelStoreDefault(t *testing.T) {
 	expectedInstanceName := terraform.Output(t, terraformOptions, "instance_name")
 
 	// Fetch actual instance name from GCP Parallelstore API
-	actualInstanceName, err := getParallelstoreInstance()
+	actualInstanceName, err := getParallelstoreInstance(expectedInstanceName)
 	assert.NoError(t, err, "Failed to retrieve Parallelstore instance from GCP")
 
 	// Assert Terraform output matches the actual instance name
