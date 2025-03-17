@@ -52,6 +52,17 @@ func TestParallelstoreSuite(t *testing.T) {
     })
 }
 
+// Extracts the region from the instance's Parent field
+func extractLocation(parent string) string {
+	parts := strings.Split(parent, "/")
+	for i, part := range parts {
+		if part == "locations" && i+1 < len(parts) {
+			return parts[i+1]
+		}
+	}
+	return "unknown-region"
+}
+
 // Function to fetch Parallelstore instance from GCP API
 func getParallelstoreInstance(expectedName string) (*ParallelstoreInstanceDetails, error) {
 	ctx := context.Background()
@@ -82,7 +93,7 @@ func getParallelstoreInstance(expectedName string) (*ParallelstoreInstanceDetail
 		if strings.Contains(instance.Name, expectedName) {
 			instanceDetails := &ParallelstoreInstanceDetails{
 				Name:            		instance.Name,
-				// Region:          	instance.Location,
+				Region:          		extractLocation(instance.Name),
 				DeploymentType:  		instance.DeploymentType.String(), // Adjust this field according to API response
 				CapacityGb:      		strconv.FormatInt(instance.CapacityGib, 10), // Adjust this field according to API response
 				FileStripeLevel: 		instance.FileStripeLevel.String(), // Adjust as necessary
@@ -107,6 +118,7 @@ func testParallelstoreInstanceExists(t *testing.T) {
 // Test if the actual instance name & deployment type from GCP match with the terraform output
 func testTerraformParallelStoreDefault(t *testing.T) {
 	expectedInstanceName := terraform.Output(t, terraformOptions, "instance_name")
+	expectedRegion := terraform.Output(t, terraformOptions, "region")
 	expectedDeploymentType := terraform.Output(t, terraformOptions, "deployment_type")
 
 	// Fetch actual instance name from GCP Parallelstore API
@@ -115,6 +127,8 @@ func testTerraformParallelStoreDefault(t *testing.T) {
 
 	// Assert Terraform output matches the actual instance name
 	assert.Equal(t, expectedInstanceName, instanceDetails.Name, "Parallelstore instance name does not match expected value")
+	// Assert Terraform output matches the actual instance name
+	assert.Equal(t, expectedRegion, instanceDetails.Region, "Parallelstore instance region does not match expected value")
 	// Assert Terraform output matches the actual deployment type
 	assert.Equal(t, expectedDeploymentType, instanceDetails.DeploymentType, "Parallelstore instance deployment type does not match expected value")
 }
