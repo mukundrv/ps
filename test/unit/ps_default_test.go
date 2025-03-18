@@ -5,7 +5,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	parallelstore "cloud.google.com/go/parallelstore/apiv1beta"
 	parallelstorepb "cloud.google.com/go/parallelstore/apiv1beta/parallelstorepb"
-	"google.golang.org/api/iterator"
 	"testing"
 	"context"
 	"fmt"
@@ -67,44 +66,35 @@ func extractLocation(parent string) string {
 func getParallelstoreInstance(expectedName string) (*ParallelstoreInstanceDetails, error) {
 	ctx := context.Background()
 
-    // Initialize Parallelstore API client
-    client, err := parallelstore.NewClient(ctx)
-    if err != nil {
-        return nil, err
-    }
-    defer client.Close()
+	// Initialize Parallelstore API client
+	client, err := parallelstore.NewClient(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer client.Close()
 
-	// List Parallelstore instances in the specified project and region
-	req := &parallelstorepb.ListInstancesRequest{
-		Parent: "projects/" + projectID + "/locations/" + location,
+	// Get the specific Parallelstore instance
+	req := &parallelstorepb.GetInstanceRequest{
+		Name: expectedName,
 	}
 
-	it := client.ListInstances(ctx, req)
-	for {
-		instance, err := it.Next()
-		if err == iterator.Done {
-			break
-		}
-        if err != nil {
-            return nil, err
-        }
-
-		// ✅ Return only if the instance name matches the expected name
-		if strings.Contains(instance.Name, expectedName) {
-			instanceDetails := &ParallelstoreInstanceDetails{
-				Name:            		instance.Name,
-				Region:          		extractLocation(instance.Name),
-				DeploymentType:  		instance.DeploymentType.String(), // Adjust this field according to API response
-				CapacityGb:      		strconv.FormatInt(instance.CapacityGib, 10), // Adjust this field according to API response
-				FileStripeLevel: 		instance.FileStripeLevel.String(), // Adjust as necessary
-				DirectoryStripeLevel:  	instance.DirectoryStripeLevel.String(), // Adjust as necessary
-				Labels:          		fmt.Sprintf("%v", instance.Labels),
-			}
-			return instanceDetails, nil
-		}
+	instance, err := client.GetInstance(ctx, req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get instance %s: %v", expectedName, err)
 	}
 
-	return nil, fmt.Errorf("No Parallelstore instance matching '%s' found in project %s, region %s", expectedName, projectID, location)
+	// ✅ Extract and return instance details
+	instanceDetails := &ParallelstoreInstanceDetails{
+		Name:                  instance.Name,
+		Region:                extractLocation(instance.Name),
+		DeploymentType:        instance.DeploymentType.String(),
+		CapacityGb:            strconv.FormatInt(instance.CapacityGib, 10),
+		FileStripeLevel:       instance.FileStripeLevel.String(),
+		DirectoryStripeLevel:  instance.DirectoryStripeLevel.String(),
+		Labels:                fmt.Sprintf("%v", instance.Labels),
+	}
+
+	return instanceDetails, nil
 }
 
 // Test if the instance exists in GCP
