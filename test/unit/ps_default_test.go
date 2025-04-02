@@ -3,8 +3,8 @@ package test
 import (
 	"github.com/gruntwork-io/terratest/modules/terraform"
 	"github.com/stretchr/testify/assert"
-	parallelstore "cloud.google.com/go/parallelstore/apiv1beta"
-	parallelstorepb "cloud.google.com/go/parallelstore/apiv1beta/parallelstorepb"
+	parallelstore "cloud.google.com/go/parallelstore/apiv1"
+	parallelstorepb "cloud.google.com/go/parallelstore/apiv1/parallelstorepb"
 	"testing"
 	"context"
 	"fmt"
@@ -32,15 +32,14 @@ type ParallelstoreInstanceDetails struct {
 var terraformOptions *terraform.Options
 
 func TestParallelstoreSuite(t *testing.T) {
-	// 🚀 Step 1: Terraform Setup
+	// Step 1: Terraform Setup
 	terraformOptions = &terraform.Options{
 		TerraformDir: "../../examples/baseline",
 	}
 	terraform.InitAndApply(t, terraformOptions)
 
-	// 🚀 Step 2: Run Subtests Sequentially
-	t.Run("ParallelstoreInstanceExists", testParallelstoreInstanceExists)
-	t.Run("TerraformParallelStoreDefault", testTerraformParallelStoreDefault)
+	// Step 2: Run Subtests Sequentially
+	t.Run("ParallelstoreInstanceExistsandMatch", testParallelstoreInstanceValidation)
 	t.Run("TerraformParallelStoreLabels", testTerraformParallelStoreLabels)
 	t.Run("TerraformParallelStoreCapacity", testTerraformParallelStoreCapacity)
 	t.Run("TerraformParallelStoreStripeLevel", testTerraformParallelStoreStripeLevel)
@@ -83,7 +82,7 @@ func getParallelstoreInstance(expectedName string) (*ParallelstoreInstanceDetail
 		return nil, fmt.Errorf("failed to get instance %s: %v", expectedName, err)
 	}
 
-	// ✅ Extract and return instance details
+	// Extract and return instance details
 	instanceDetails := &ParallelstoreInstanceDetails{
 		Name:                  instance.Name,
 		Region:                extractLocation(instance.Name),
@@ -98,28 +97,19 @@ func getParallelstoreInstance(expectedName string) (*ParallelstoreInstanceDetail
 }
 
 // Test if the instance exists in GCP
-func testParallelstoreInstanceExists(t *testing.T) {
-	expectedInstanceName := terraform.Output(t, terraformOptions, "instance_name")
-	instanceDetails, err := getParallelstoreInstance(expectedInstanceName)
-	assert.NoError(t, err, "Failed to retrieve Parallelstore instance from GCP")
-	assert.NotNil(t, instanceDetails, "No Parallelstore instance found matching Terraform output")
-}
-
-// Test if the actual instance name & deployment type from GCP match with the terraform output
-func testTerraformParallelStoreDefault(t *testing.T) {
+func testParallelstoreInstanceValidation(t *testing.T) {
 	expectedInstanceName := terraform.Output(t, terraformOptions, "instance_name")
 	expectedRegion := terraform.Output(t, terraformOptions, "region")
 	expectedDeploymentType := terraform.Output(t, terraformOptions, "deployment_type")
 
-	// Fetch actual instance name from GCP Parallelstore API
+	// Fetch actual instance details from GCP Parallelstore API
 	instanceDetails, err := getParallelstoreInstance(expectedInstanceName)
 	assert.NoError(t, err, "Failed to retrieve Parallelstore instance from GCP")
+	assert.NotNil(t, instanceDetails, "No Parallelstore instance found matching Terraform output")
 
-	// Assert Terraform output matches the actual instance name
+	// Validate instance name, region, and deployment type
 	assert.Equal(t, expectedInstanceName, instanceDetails.Name, "Parallelstore instance name does not match expected value")
-	// Assert Terraform output matches the actual instance name
 	assert.Equal(t, expectedRegion, instanceDetails.Region, "Parallelstore instance region does not match expected value")
-	// Assert Terraform output matches the actual deployment type
 	assert.Equal(t, expectedDeploymentType, instanceDetails.DeploymentType, "Parallelstore instance deployment type does not match expected value")
 }
 

@@ -33,8 +33,8 @@ variable "capacity_gib" {
   default     = "27000"
 
   validation {
-    condition     = var.capacity_gib >= 27000 && var.capacity_gib <= 301000 # && var.capacity_gib % 7000 == 0
-    error_message = "Invalid input, the instance capacity can only be configured starting from 27TiB ( 27000GiB ) up to 301TiB, # with increments of 7Ti."
+    condition     = var.capacity_gib >= 27000 && var.capacity_gib <= 306000 && var.capacity_gib % 9000 == 0
+    error_message = "Invalid input, the instance capacity can only be configured starting from 27TiB ( 27000GiB ) up to 306TiB, # with increments of 9Ti."
   }
 }
 
